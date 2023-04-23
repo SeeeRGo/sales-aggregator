@@ -1,2 +1,5 @@
 # Вакансии АПК = channel_id=1489061924
 # Вакансии АПК = chat_id=-1001489061924
+# SkillStaff = chat_id=-1001259051878
+# Mad Brains = chat_id=-1001306794802
+# SSP Soft = chat_id=-1001211051969
