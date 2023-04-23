@@ -1,12 +1,13 @@
 const express = require('express')
 const app = express()
-
+const dotenv = require("dotenv");
 const dayjs = require("dayjs");
 const { Client } = require("tdl");
 const { TDLib } = require("tdl-tdlib-addon");
 
+dotenv.config();
 const client = new Client(
-  new TDLib("/Users/user/td/tdlib/lib/libtdjson.dylib"),
+  new TDLib(process.env.LIB_PATH),
   {
     apiId: 28578457, // Your api_id, get it at http://my.telegram.org/
     apiHash: "1ac319afbb928a2175c4ac6f30fb7e6c", // Your api_hash

@@ -2,6 +2,7 @@
   "dependencies": {
     "@mtproto/core": "^6.2.0",
     "dayjs": "^1.11.7",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "tdl": "^7.2.0",
     "tdl-tdlib-addon": "^1.2.1",
