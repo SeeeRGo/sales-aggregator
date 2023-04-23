@@ -23,7 +23,7 @@ const chatIds = [
 ];
 // const chatId = 777000
 async function getMessages() {
-  await client.login();
+  // await client.login(); UNCOMMENT FOR INITIAL START
   // const chats = await client.invoke({
   //   _: "getChats",
   //   chat_list: { _: "chatListMain" },
@@ -134,8 +134,15 @@ app.use((req, res, next) => {
   })
 
 app.get('/', async (_, res) => {
+  try {
     const messages = await getMessages()
+    console.log('messages');
     res.send(messages);
+    console.log('sent messages');
+  } catch (e) {
+    console.log('error', e);
+    res.send({})
+  }
 })
 
 // /////////////////////////////////////////////////////////////////////////////
