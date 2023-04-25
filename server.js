@@ -19,16 +19,19 @@ client.on("error", console.error);
 //   console.log('Received update:', update)
 // })
 const chatIds = [
-  -1001489061924, -1001259051878, -1001306794802, -1001211051969,
+  -1001489061924,
+  -1001259051878,
+  -1001306794802,
+  -1001211051969,
 ];
 // const chatId = 777000
 async function getMessages() {
-  // await client.login(); UNCOMMENT FOR INITIAL START
+  // await client.login(); // UNCOMMENT FOR INITIAL START
   // const chats = await client.invoke({
   //   _: "getChats",
   //   chat_list: { _: "chatListMain" },
-  //   limit: 20,
-  // });
+  //   limit: 40,
+  // }); // UNCOMMENT FOR INITIAL START TOO
   // const chatsInfo = [];
   // for(let i = 0; i < chatIds.length; i++) {
   //   const chatInfo = await client.invoke({
@@ -136,9 +139,7 @@ app.use((req, res, next) => {
 app.get('/', async (_, res) => {
   try {
     const messages = await getMessages()
-    console.log('messages');
     res.send(messages);
-    console.log('sent messages');
   } catch (e) {
     console.log('error', e);
     res.send({})
