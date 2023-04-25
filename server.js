@@ -32,14 +32,14 @@ async function getMessages() {
   //   chat_list: { _: "chatListMain" },
   //   limit: 40,
   // }); // UNCOMMENT FOR INITIAL START TOO
-  // const chatsInfo = [];
-  // for(let i = 0; i < chatIds.length; i++) {
-  //   const chatInfo = await client.invoke({
-  //     _: "getChat",
-  //     chat_id: chatIds[i],
-  //   });
-  //   chatsInfo.push(chatInfo)
-  // }
+  const chatsInfo = [];
+  for(let i = 0; i < chatIds.length; i++) {
+    const chatInfo = await client.invoke({
+      _: "getChat",
+      chat_id: chatIds[i],
+    });
+    chatsInfo.push(chatInfo.title)
+  }
 
   // GET LATEST YESTERDAY'S MESSAGE FOR EVERY CHAT
   const todayMessageIds = [];
@@ -108,6 +108,7 @@ async function getMessages() {
   return {
     todayMessages,
     lastWeekMessages,
+    chatsInfo,
   };
   // await client.close()
 }
