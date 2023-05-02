@@ -25,13 +25,39 @@ const chatIds = [
   -1001211051969,
 ];
 // const chatId = 777000
+const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
+  const { id: latestTimeframeMessageId } = await client.invoke({
+    _: "getChatMessageByDate",
+    chat_id: chatId,
+    date: endDate,
+  });
+  const { messages } = await client.invoke({
+    _: "getChatHistory",
+    chat_id: chatId,
+    from_message_id: latestTimeframeMessageId,
+    limit: 100,
+    offset: -1,
+  });
+  const result = messages
+  .filter(({ date, content: { text } }) => text && date > startDate)
+  .map(
+    ({
+      date,
+      content: {
+        text: { text, entities },
+      },
+    }) => ({ text, entities, date })
+  )
+  return  result
+}
+
 async function getMessages() {
   // await client.login(); // UNCOMMENT FOR INITIAL START
-  // const chats = await client.invoke({
-  //   _: "getChats",
-  //   chat_list: { _: "chatListMain" },
-  //   limit: 40,
-  // }); // UNCOMMENT FOR INITIAL START TOO
+  const chats = await client.invoke({
+    _: "getChats",
+    chat_list: { _: "chatListMain" },
+    limit: 40,
+  }); // UNCOMMENT FOR INITIAL START TOO
   const chatsInfo = [];
   for(let i = 0; i < chatIds.length; i++) {
     const chatInfo = await client.invoke({
@@ -41,73 +67,35 @@ async function getMessages() {
     chatsInfo.push(chatInfo.title)
   }
 
-  // GET LATEST YESTERDAY'S MESSAGE FOR EVERY CHAT
-  const todayMessageIds = [];
-  const lastWeekMessageIds = [];
-  for (let i = 0; i < chatIds.length; i++) {
-    const todayEnd = dayjs().endOf("day").unix();
-    const yesterdayEnd = dayjs().add(-1, "day").endOf("day").unix();
-    const { id } = await client.invoke({
-      _: "getChatMessageByDate",
-      chat_id: chatIds[i],
-      date: todayEnd,
-    });
-    const { id: yesterdayMessageId } = await client.invoke({
-      _: "getChatMessageByDate",
-      chat_id: chatIds[i],
-      date: yesterdayEnd,
-    });
-    todayMessageIds.push(id);
-    lastWeekMessageIds.push(yesterdayMessageId);
-  }
-
   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
-  const todayMessages = [];
-  const lastWeekMessages = [];
+  const lastHourMessages = [];
+  const lastFourHourMessages = [];
+  const lastDayMessages = [];
+  const olderMessages = [];
   for (let i = 0; i < chatIds.length; i++) {
-    const yesterdayEnd = dayjs().add(-1, "day").endOf("day").unix();
-    const weekAgo = dayjs().add(-1, "week").startOf("day").unix();
-    const { messages: todayHistory } = await client.invoke({
-      _: "getChatHistory",
-      chat_id: chatIds[i],
-      from_message_id: todayMessageIds[i],
-      limit: 100,
-    });
-    const { messages: lastWeekHistory } = await client.invoke({
-      _: "getChatHistory",
-      chat_id: chatIds[i],
-      from_message_id: lastWeekMessageIds[i],
-      limit: 100,
-    });
-    todayMessages.push(
-      todayHistory
-        .filter(({ date, content: { text } }) => text && date > yesterdayEnd)
-        .map(
-          ({
-            date,
-            content: {
-              text: { text },
-            },
-          }) => ({ text, date })
-        )
-    );
-    lastWeekMessages.push(
-      lastWeekHistory
-        .filter(({ date, content: { text } }) => text && date > weekAgo)
-        .map(
-          ({
-            date,
-            content: {
-              text: { text },
-            },
-          }) => ({ text, date })
-        )
-    );
+    const hourAgo = dayjs().add(-1, "hour").unix();
+    const fourHoursAgo = dayjs().add(-4, "hour").unix();
+    const dayAgo = dayjs().add(-1, "day").unix();
+    const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
+    const lastHourHistory = await getChatHistoryFromDate(chatIds[i], hourAgo, dayjs().unix())
+    const lastFourHoursHistory = await getChatHistoryFromDate(chatIds[i], fourHoursAgo, hourAgo)
+    const lastDayHistory = await getChatHistoryFromDate(chatIds[i], dayAgo, fourHoursAgo)
+    const olderHistory = await getChatHistoryFromDate(chatIds[i], monthAgo, dayAgo)
+    
+    lastHourMessages.push(lastHourHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+
+    lastFourHourMessages.push(lastFourHoursHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+
+    lastDayMessages.push(lastDayHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+
+    olderMessages.push(olderHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
   }
 
   return {
-    todayMessages,
-    lastWeekMessages,
+    lastHourMessages,
+    lastFourHourMessages,
+    lastDayMessages,
+    olderMessages,
     chatsInfo,
   };
   // await client.close()
