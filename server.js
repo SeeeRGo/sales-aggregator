@@ -42,11 +42,13 @@ const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
   .filter(({ date, content: { text } }) => text && date > startDate)
   .map(
     ({
+      id,
+      chat_id,
       date,
       content: {
         text: { text, entities },
       },
-    }) => ({ text, entities, date })
+    }) => ({ messageId: `${id}${chatId}`, text, entities, date })
   )
   return  result
 }
@@ -68,10 +70,10 @@ async function getMessages() {
   }
 
   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
-  const lastHourMessages = [];
-  const lastFourHourMessages = [];
-  const lastDayMessages = [];
-  const olderMessages = [];
+  let lastHourMessages = [];
+  let lastFourHourMessages = [];
+  let lastDayMessages = [];
+  let olderMessages = [];
   for (let i = 0; i < chatIds.length; i++) {
     const hourAgo = dayjs().add(-1, "hour").unix();
     const fourHoursAgo = dayjs().add(-4, "hour").unix();
@@ -82,13 +84,21 @@ async function getMessages() {
     const lastDayHistory = await getChatHistoryFromDate(chatIds[i], dayAgo, fourHoursAgo)
     const olderHistory = await getChatHistoryFromDate(chatIds[i], monthAgo, dayAgo)
     
-    lastHourMessages.push(lastHourHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+    lastHourMessages = lastHourMessages.concat(
+      lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    );
 
-    lastFourHourMessages.push(lastFourHoursHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+    lastFourHourMessages = lastFourHourMessages.concat(
+      lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    );
 
-    lastDayMessages.push(lastDayHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+    lastDayMessages = lastDayMessages.concat(
+      lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    );
 
-    olderMessages.push(olderHistory.map(res => ({ ...res, chatName: chatsInfo[i] })));
+    olderMessages = olderMessages.concat(
+      olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    );
   }
 
   return {
