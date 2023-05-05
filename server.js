@@ -19,10 +19,45 @@ client.on("error", console.error);
 //   console.log('Received update:', update)
 // })
 const chatIds = [
-  -1001489061924,
+  -1001254597341,
   -1001259051878,
-  -1001306794802,
+  -1001478880423,
+  -1001489061924,
   -1001211051969,
+  -1001306794802,
+  -1001773534346,
+  -1001315524793,
+  -1001332690767,  
+  -1001294009783,
+  5377945958,  
+  -1001512507088,
+  5357693474,
+  -1001244373622,
+  -1001076312571,
+  -1001612984186,
+  -1001570400379,  
+  -1001120611331,
+  -1001727398064,
+  -1001666172044,
+  -1001139345092,
+  -1001516827892,
+  -1001684315574,  
+  -1001527372844,  
+  -1001284121152,
+  -1001445071488,
+  -1001548632083,
+  -1001403624445,  
+  -1001706094161,
+  -1001376858073,
+  -1001391497838,  
+  -1001391347473,
+  -1001502018760,
+  -1001211051969,  
+  -1001751281898,
+  -1001357786906,
+  -1001451069977,  
+  -1001080132414,
+  -1001987345789,
 ];
 // const chatId = 777000
 const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
@@ -55,18 +90,18 @@ const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
 
 async function getMessages() {
   // await client.login(); // UNCOMMENT FOR INITIAL START
-  const chats = await client.invoke({
-    _: "getChats",
-    chat_list: { _: "chatListMain" },
-    limit: 40,
-  }); // UNCOMMENT FOR INITIAL START TOO
+  // const chats = await client.invoke({
+  //   _: "getChats",
+  //   chat_list: { _: "chatListMain" },
+  //   limit: 99,
+  // }); // UNCOMMENT FOR INITIAL START TOO
   const chatsInfo = [];
   for(let i = 0; i < chatIds.length; i++) {
-    const chatInfo = await client.invoke({
+    const { id, title } = await client.invoke({
       _: "getChat",
       chat_id: chatIds[i],
     });
-    chatsInfo.push(chatInfo.title)
+    chatsInfo.push(title)
   }
 
   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
