@@ -6,13 +6,12 @@ RUN git clone https://github.com/tdlib/td.git
 RUN cd td
 RUN rm -rf build
 RUN mkdir build
-RUN cd /td
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=./tdlib .
-RUN cd build
+# RUN cd build
+RUN cmake ./td
+RUN cd td
 RUN cmake --build . --target install
 RUN cd ..
 RUN cd ..
-RUN ls -l td/tdlib
 WORKDIR /app
 COPY package.json package.json
 COPY . .
