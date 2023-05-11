@@ -1,19 +1,6 @@
 FROM node:18-alpine
-RUN apk update
-RUN apk upgrade
-RUN apk add --update alpine-sdk linux-headers git zlib-dev openssl-dev gperf php cmake
-RUN git clone https://github.com/tdlib/td.git
-RUN cd td
-RUN rm -rf build
-RUN mkdir build
-# RUN cd build
-RUN cmake ./td
-RUN cd td
-RUN cmake --build . --target install
-RUN cd ..
-RUN cd ..
 WORKDIR /app
 COPY package.json package.json
 COPY . .
 RUN npm install
-CMD node server.js
+CMD node alternative.js

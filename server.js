@@ -124,8 +124,8 @@ async function getMessages() {
   return {
     lastHourMessages,
     lastFourHourMessages,
-    lastDayMessages: [],
-    olderMessages: [],
+    lastDayMessages,
+    olderMessages,
     chatsInfo,
   };
   // await client.close()

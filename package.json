@@ -4,8 +4,10 @@
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "input": "^1.0.1",
     "tdl": "^7.2.0",
     "tdl-tdlib-addon": "^1.2.1",
-    "tdlib-types": "^0.1001008.1"
+    "tdlib-types": "^0.1001008.1",
+    "telegram": "^2.16.4"
   }
 }
