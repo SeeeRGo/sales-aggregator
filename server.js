@@ -7,8 +7,8 @@
 
 // dotenv.config();
 // const client = new Client(new TDLib(process.env.LIB_PATH), {
-//   apiId: 28578457, // Your api_id, get it at http://my.telegram.org/
-//   apiHash: "1ac319afbb928a2175c4ac6f30fb7e6c", // Your api_hash
+//   apiId: process.env.API_ID, // Your api_id, get it at http://my.telegram.org/
+//   apiHash: process.env.API_HASH, // Your api_hash
 // });
 
 // client.on("error", console.error);

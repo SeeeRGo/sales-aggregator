@@ -6,9 +6,9 @@ const { StringSession } = require("telegram/sessions");
 const input = require("input");
 const { message } = require("telegram/client");
 
-const apiId = 28578457;
-const apiHash = "1ac319afbb928a2175c4ac6f30fb7e6c";
-const stringSession = new StringSession("1AgAOMTQ5LjE1NC4xNjcuNDEBuzkICf6FqMri/7Z7WCsfNLrqMS5Eya5Z7Anmv6WbAPGwBrupNPlYu9yHr2y1JITpvZWPqA1K+AsyXTxbe1A43a6LmQctIxSQO1ZFrkFtO0C6Qs3i5fHn1RX+4kj9FOmmFN0fmEEuI+jZWBixfO9wxq0+zDOTdAU5N8g7ZKHM/pSbd/yGUdxlv8XsR6tAiVIIY6N5cVAAkRpbvhPCQbw8FWYsWtPHvEFleIvMmElve0KLLv1Ks1SnZnVJ6v2MaGhTe5kXWEDqH2e5aJeZ2El7pApnLk8xsBa5sgWFeSAlP5xebZcQpQIWKjcFfNvr55CwSziVF2OaAc8Fwc7/qAbrrZM="); // fill this later with the value from session.save()
+const apiId = process.env.API_ID;
+const apiHash = process.env.API_HASH;
+const stringSession = new StringSession(process.env.STRING_SESSION); // fill this later with the value from session.save()
 
 const chatIds = [
   -1001254597341, -1001259051878, -1001478880423, -1001489061924,
