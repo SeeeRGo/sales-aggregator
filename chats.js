@@ -153,3 +153,29 @@ const otherChats = [
   {"title":"MMTR Partners Group","id":"1451069977"},
   {"title":"IT Unity_Partners","id":"1987345789"}
 ]
+
+const moreChats = [
+  {"id":"-838159173","name":"ADMOP","title":"ADMOP"},
+  {"id":"5357693474","name":"Kesmaty","title":"Kesmaty"},
+  {"id":"-1001259051878","name":"SkillStaff: новости и запросы на outstaff","title":"SkillStaff: новости и запросы на outstaff"},
+  {"id":"-1001900468655","name":"ADMOP Dev","title":"ADMOP Dev"},
+  {"id":"-1001517966409","name":"Запросы на ИТ аутстафф (B-Hire.com)","title":"Запросы на ИТ аутстафф (B-Hire.com)"},
+  {"id":"-1001211051969","name":"SSP SOFT outsourcing","title":"SSP SOFT outsourcing"},
+  {"id":"-1001489061924","name":"Вакансии IPC (АПК)","title":"Вакансии IPC (АПК)"},
+  {"id":"-1001518770876","name":"Holyweb | Запросы на аутстафф","title":"Holyweb | Запросы на аутстафф"},
+  {"id":"-1001306794802","name":"Mad Brains || Partners Channel","title":"Mad Brains || Partners Channel"},
+  {"id":"-1001289197989","name":"CusDev.Me Partners channel","title":"CusDev.Me Partners channel"},
+  {"id":"-1001859586999","name":"Tinkoff IT Partnership","title":"Tinkoff IT Partnership"},
+  {"id":"-1001987345789","name":"IT Unity_Partners","title":"IT Unity_Partners"},
+  {"id":"5709595227","name":"Godigital","title":"Godigital"},
+  {"id":"-1001795499242","name":"[Global] Secreate Partners","title":"[Global] Secreate Partners"},
+  {"id":"-1001857651809","name":"Аутстаффинг в IT. Запросы","title":"Аутстаффинг в IT. Запросы"},
+  {"id":"-1001201636422","name":"IT Outsourcing leads","title":"IT Outsourcing leads"},
+  {"id":"-1001589732488","name":"КРОК/Rockitsoft IT Outstaff","title":"КРОК/Rockitsoft IT Outstaff"},
+  {"id":"-1001478880423","name":"Foxtail_Jobs_Remote","title":"Foxtail_Jobs_Remote"},
+  {"id":"-1001522971705","name":"Kotelov_international","title":"Kotelov_international"},
+  {"id":"-1001513463322","name":"Userstory | Аутстаффинг","title":"Userstory | Аутстаффинг"},
+  {"id":"5596230697","name":"XPRT MINDS BOT","title":"XPRT MINDS BOT"},
+  {"id":"-1001949901742","name":"iStaff-IT_Outstaff запросы","title":"iStaff-IT_Outstaff запросы"},
+  {"id":"-1001656664424","name":"Мосбиржа Вакансии","title":"Мосбиржа Вакансии"}
+]
