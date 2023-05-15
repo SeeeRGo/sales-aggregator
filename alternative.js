@@ -1,19 +1,21 @@
 const express = require("express");
 const app = express();
 const dayjs = require("dayjs");
+const dotenv = require("dotenv");
 const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
 const { message } = require("telegram/client");
 
-const apiId = process.env.API_ID;
+dotenv.config();
+const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const stringSession = new StringSession(process.env.STRING_SESSION); // fill this later with the value from session.save()
 
 const chatIds = [
   -1001254597341, -1001259051878, -1001478880423, -1001489061924,
   -1001211051969, -1001306794802, -1001773534346, -1001315524793,
-  -1001332690767, -1001294009783, //5377945958, -1001512507088, // 5357693474,
+  -1001332690767, -1001294009783, -1001512507088, // 5377945958, 5357693474,
   -1001244373622, -1001076312571, -1001612984186, -1001570400379,
   -1001120611331, -1001727398064, -1001666172044, -1001139345092,
   -1001516827892, -1001684315574, -1001527372844, -1001284121152,
@@ -34,7 +36,7 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
 const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
   const { messages } = await client.invoke(new Api.messages.GetHistory({
     peer: chatId,
-    limit: 100,
+    limit: 50,
     offsetDate: endDate,
   }));
   const result = messages
@@ -58,6 +60,8 @@ async function getMessages() {
   //   chat_list: { _: "chatListMain" },
   //   limit: 99,
   // }); // UNCOMMENT FOR INITIAL START TOO
+  // const dialogs = await client.getDialogs()
+  // console.log('dialogs', dialogs.map(({ dialog: { peer } }) => peer));
   const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
   const chatsInfo = chats.map(({ title }) => title)
 
@@ -81,16 +85,16 @@ async function getMessages() {
       fourHoursAgo,
       hourAgo
     );
-    const lastDayHistory = await getChatHistoryFromDate(
-      chatIds[i],
-      dayAgo,
-      fourHoursAgo
-    );
-    const olderHistory = await getChatHistoryFromDate(
-      chatIds[i],
-      monthAgo,
-      dayAgo
-    );
+    // const lastDayHistory = await getChatHistoryFromDate(
+    //   chatIds[i],
+    //   dayAgo,
+    //   fourHoursAgo
+    // );
+    // const olderHistory = await getChatHistoryFromDate(
+    //   chatIds[i],
+    //   monthAgo,
+    //   dayAgo
+    // );
 
   lastHourMessages = lastHourMessages.concat(
     lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
@@ -100,20 +104,20 @@ async function getMessages() {
     lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
   );
 
-  lastDayMessages = lastDayMessages.concat(
-    lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  );
+  // lastDayMessages = lastDayMessages.concat(
+  //   lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  // );
 
-  olderMessages = olderMessages.concat(
-    olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  );
+  // olderMessages = olderMessages.concat(
+  //   olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  // );
   }
 
   return {
     lastHourMessages,
     lastFourHourMessages,
-    lastDayMessages,
-    olderMessages,
+    lastDayMessages: [],
+    olderMessages: [],
     chatsInfo,
   };
 }
