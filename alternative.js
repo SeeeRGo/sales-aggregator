@@ -77,7 +77,7 @@ async function getMessages() {
   //   limit: 99,
   // }); // UNCOMMENT FOR INITIAL START TOO
   // console.log('dialogs', dialogs.map(({ dialog: { peer } }) => peer));
-  // const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
+  const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
   const chatsInfo = chats.map(({ title }) => title)
 
   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
