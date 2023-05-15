@@ -76,52 +76,50 @@ async function getMessages() {
   //   chat_list: { _: "chatListMain" },
   //   limit: 99,
   // }); // UNCOMMENT FOR INITIAL START TOO
-  const dialogs = await client.getDialogs()
-  const parsedDialog = dialogs.map(({ id, name, title}) => ({ id, name, title}))
   // console.log('dialogs', dialogs.map(({ dialog: { peer } }) => peer));
   // const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
-  // const chatsInfo = chats.map(({ title }) => title)
+  const chatsInfo = chats.map(({ title }) => title)
 
-  // // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
-  // let lastHourMessages = [];
-  // let lastFourHourMessages = [];
-  // let lastDayMessages = [];
-  // let olderMessages = [];
-  // for (let i = 0; i < chatIds.length; i++) {
-  //   const {
-  //     lastHourHistory,
-  //     lastFourHoursHistory,
-  //     lastDayHistory,
-  //     olderHistory,
-  //   } = await getChatHistoryFromDate(
-  //     chatIds[i],
-  //   );
+  // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
+  let lastHourMessages = [];
+  let lastFourHourMessages = [];
+  let lastDayMessages = [];
+  let olderMessages = [];
+  for (let i = 0; i < chatIds.length; i++) {
+    const {
+      lastHourHistory,
+      lastFourHoursHistory,
+      lastDayHistory,
+      olderHistory,
+    } = await getChatHistoryFromDate(
+      chatIds[i],
+    );
 
-  // lastHourMessages = lastHourMessages.concat(
-  //   lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  // );
+  lastHourMessages = lastHourMessages.concat(
+    lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  );
 
-  // lastFourHourMessages = lastFourHourMessages.concat(
-  //   lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  // );
+  lastFourHourMessages = lastFourHourMessages.concat(
+    lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  );
 
-  // lastDayMessages = lastDayMessages.concat(
-  //   lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  // );
+  lastDayMessages = lastDayMessages.concat(
+    lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  );
 
-  // olderMessages = olderMessages.concat(
-  //   olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-  // );
-  // }
+  olderMessages = olderMessages.concat(
+    olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+  );
+  }
 
-  // return {
-  //   lastHourMessages,
-  //   lastFourHourMessages,
-  //   lastDayMessages,
-  //   olderMessages,
-  //   chatsInfo,
-  // };
-  return { dialogs: parsedDialog }
+  return {
+    lastHourMessages,
+    lastFourHourMessages,
+    lastDayMessages,
+    olderMessages,
+    chatsInfo,
+  };
+
 }
 
 
