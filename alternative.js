@@ -6,6 +6,7 @@ const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
 const { message } = require("telegram/client");
+const { createClient } = require('@supabase/supabase-js')
 
 dotenv.config();
 const apiId = parseInt(process.env.API_ID);
@@ -36,6 +37,13 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
 
+// Create a single supabase client for interacting with your database
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+);
+
+
 const parseMessages = (messages, startDate, endDate, chatId) => messages
 .filter(({ date, message }) => message && date > startDate && date < endDate)
 .map(
@@ -46,6 +54,33 @@ const parseMessages = (messages, startDate, endDate, chatId) => messages
     message
   }) => ({ messageId: `${id}${chatId}`, text: message, entities, date })
 );
+
+const createMessagesForDB = (messages, chatId, chatName) => messages.map(
+  ({
+    id,
+    date,
+    entities,
+    message
+  }) => ({
+    tg_message_id: `${id}${chatId}`, text: message, entities, message_date: date, tg_chat_name: chatName })
+)
+
+const getLatestHistory = async (chatId, chatName) => {
+  const fiveMinutes = dayjs().add(-5, "minutes").unix();
+  const { messages } = await client.invoke(new Api.messages.GetHistory({
+    peer: chatId,
+    limit: 50,
+  }));
+  return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > fiveMinutes)
+}
+const getFullHistory = async (chatId, chatName) => {
+  const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
+  const { messages } = await client.invoke(new Api.messages.GetHistory({
+    peer: chatId,
+    limit: 300,
+  }));
+  return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > monthAgo)
+}
 
 const getChatHistoryFromDate = async (chatId) => {
   const hourAgo = dayjs().add(-1, "hour").unix();
@@ -144,15 +179,34 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", async (_, res) => {
-  try {
-    const messages = await getMessages();
-    res.send(messages);
-  } catch (e) {
-    console.log("error", e);
-    res.send({});
-  }
-});
+// app.get("/", async (_, res) => {
+//   try {
+//     const messages = await getMessages();
+//     res.send(messages);
+//   } catch (e) {
+//     console.log("error", e);
+//     res.send({});
+//   }
+// });
+
+// app.get("/full", async (_, res) => {
+//   try {
+//     const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
+//     const chatsInfo = chats.map(({ title }) => title)
+//     const result = []
+//     for (let i = 0; i < chatIds.length; i++) {
+//       const messages = await getFullHistory(chatIds[i], chatsInfo[i]);
+//       result.push(messages)
+//     }
+//     for (let i = 0; i < result.length; i++) {
+//       await supabase.from('messages').upsert(result[i])
+//     }
+//     res.send('OK');
+//   } catch (e) {
+//     console.log("error", e);
+//     res.send({});
+//   }
+// });
 
 // /////////////////////////////////////////////////////////////////////////////
 // Catch all handler for all other request.
@@ -171,5 +225,19 @@ app.listen(port, async () => {
       await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
   });
+  setInterval(async () => {
+    const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
+    const chatsInfo = chats.map(({ title }) => title)
+    const result = []
+    for (let i = 0; i < chatIds.length; i++) {
+      const messages = await getLatestHistory(chatIds[i], chatsInfo[i]);
+      result.push(messages)
+    }
+    for (let i = 0; i < result.length; i++) {
+      console.log('upsering', i);
+      await supabase.from('messages').upsert(result[i])
+    }
+  }, 3 * 60 * 1000)
+  
   console.log(`index.js listening at http://localhost:${port}`);
 });
