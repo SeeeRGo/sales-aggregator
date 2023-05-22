@@ -16,7 +16,7 @@ const stringSession = new StringSession(process.env.STRING_SESSION); // fill thi
 const chatIds = [
   -1001254597341, -1001259051878, -1001478880423, -1001489061924,
   -1001211051969, -1001306794802, -1001773534346, -1001315524793,
-  -1001332690767, -1001294009783, -1001512507088, // 5377945958, 5357693474,
+  -1001332690767, -1001294009783, -1001512507088,  
   -1001244373622, -1001076312571, -1001612984186, -1001570400379,
   -1001120611331, -1001727398064, -1001666172044, -1001139345092,
   -1001516827892, -1001684315574, -1001527372844, -1001284121152,
@@ -25,10 +25,18 @@ const chatIds = [
   -1001211051969, -1001751281898, -1001357786906, -1001451069977,
   -1001080132414, // Засирает ленту просто сообщениями
   -1001987345789, -1001589732488, -1001289197989, -1001517966409,
-  -1001518770876, -1001859586999, -1001201636422, -1001857651809, // 5709595227, 5596230697,
+  -1001518770876, -1001859586999, -1001201636422, -1001857651809,
   -1001478880423, -1001522971705, -1001513463322, -1001949901742,
   -1001656664424
 ];
+const userIds = [
+  new Api.InputPeerUser({"userId":BigInt("5377945958"),"accessHash":BigInt("-6137347072698466900")}),
+  new Api.InputPeerUser({"userId":BigInt("5357693474"),"accessHash":BigInt("1864063971774782801")}),
+  new Api.InputPeerUser({"userId":BigInt("5709595227"),"accessHash":BigInt("9025693265906860855")}),
+  new Api.InputPeerUser({"userId":BigInt("5596230697"),"accessHash":BigInt("1733381136733274207")}),
+]
+
+const combinedIds = chatIds.concat(userIds)
 
 // const accessHashes = [-6834854159469753124, -6055207872981864269, 8050414125024882872, 2071332180262217027, 2219870631779647460, -6273813176736408380,-5920906890419123166,-7810775977581075226,6053859012847446570,8687262491798429562,5233860802200827946,-505664746947020117,4221985370143303253,610250252856290507,8364562225157752385,3267768143761883883,5615007317366749093,-6372466980253608032,1438853615417610124,-7271687720081094371,1190566383691495979,844794807331127875,-3767227939808568650,-5922685839852522654,-2666691390116925434,-6434053341823851427,6403435223049717511,6588512478603116857,4180695193341251330,5661531200345590951,7747668825449114971,-5966010701022667524,-1619032134680908706,8761032431890758820]
 
@@ -103,6 +111,15 @@ const getChatHistoryFromDate = async (chatId) => {
   };
 };
 
+async function getCombinedChats() {
+  const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
+  const users = await client.invoke(new Api.users.GetUsers({ id: userIds}))
+  const usersInfo = users.map(({ firstName }, i) => firstName ?? 'Unknown channel ' + i)
+  const chatsInfo = chats.map(({ title }) => title)
+  const combinedChats = chatsInfo.concat(usersInfo)
+  return combinedChats
+}
+
 
 async function getMessages() {
   // await client.login(); // UNCOMMENT FOR INITIAL START
@@ -111,39 +128,39 @@ async function getMessages() {
   //   chat_list: { _: "chatListMain" },
   //   limit: 99,
   // }); // UNCOMMENT FOR INITIAL START TOO
-  // console.log('dialogs', dialogs.map(({ dialog: { peer } }) => peer));
-  const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
-  const chatsInfo = chats.map(({ title }) => title)
 
+  const combinedChats = await getCombinedChats()
+
+// const chatsInfo = []
   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
   let lastHourMessages = [];
   let lastFourHourMessages = [];
   let lastDayMessages = [];
   let olderMessages = [];
-  for (let i = 0; i < chatIds.length; i++) {
+  for (let i = 0; i < combinedIds.length; i++) {
     const {
       lastHourHistory,
       lastFourHoursHistory,
       lastDayHistory,
       olderHistory,
     } = await getChatHistoryFromDate(
-      chatIds[i],
+      combinedIds[i],
     );
 
   lastHourMessages = lastHourMessages.concat(
-    lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    lastHourHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
   );
 
   lastFourHourMessages = lastFourHourMessages.concat(
-    lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    lastFourHoursHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
   );
 
   lastDayMessages = lastDayMessages.concat(
-    lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    lastDayHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
   );
 
   olderMessages = olderMessages.concat(
-    olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
+    olderHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
   );
   }
 
@@ -152,7 +169,7 @@ async function getMessages() {
     lastFourHourMessages,
     lastDayMessages,
     olderMessages,
-    chatsInfo,
+    chatsInfo: combinedChats,
   };
 
 }
@@ -226,11 +243,11 @@ app.listen(port, async () => {
     onError: (err) => console.log(err),
   });
   setInterval(async () => {
-    const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
-    const chatsInfo = chats.map(({ title }) => title)
+    const combinedChats = await getCombinedChats()
+
     const result = []
-    for (let i = 0; i < chatIds.length; i++) {
-      const messages = await getLatestHistory(chatIds[i], chatsInfo[i]);
+    for (let i = 0; i < combinedIds.length; i++) {
+      const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
       result.push(messages)
     }
     for (let i = 0; i < result.length; i++) {
