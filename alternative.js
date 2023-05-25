@@ -198,8 +198,8 @@ app.use((req, res, next) => {
 
 // app.get("/", async (_, res) => {
 //   try {
-//     const messages = await getMessages();
-//     res.send(messages);
+//     const result = await client.invoke(new Api.channels.ExportMessageLink({ id: 6665, channel:-1001612984186 }));
+//     res.send(result);
 //   } catch (e) {
 //     console.log("error", e);
 //     res.send({});
@@ -242,19 +242,19 @@ app.listen(port, async () => {
       await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
   });
-  setInterval(async () => {
-    const combinedChats = await getCombinedChats()
+  // setInterval(async () => {
+  //   const combinedChats = await getCombinedChats()
 
-    const result = []
-    for (let i = 0; i < combinedIds.length; i++) {
-      const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
-      result.push(messages)
-    }
-    for (let i = 0; i < result.length; i++) {
-      console.log('upsering', i);
-      await supabase.from('messages').upsert(result[i])
-    }
-  }, 3 * 60 * 1000)
+  //   const result = []
+  //   for (let i = 0; i < combinedIds.length; i++) {
+  //     const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
+  //     result.push(messages)
+  //   }
+  //   for (let i = 0; i < result.length; i++) {
+  //     console.log('upsering', i);
+  //     await supabase.from('messages').upsert(result[i])
+  //   }
+  // }, 3 * 60 * 1000)
   
   console.log(`index.js listening at http://localhost:${port}`);
 });
