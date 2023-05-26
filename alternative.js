@@ -263,10 +263,10 @@ app.listen(port, async () => {
   setInterval(async () => {
     const combinedChats = await getCombinedChats()
 
-    const result = []
+    let result = []
     for (let i = 0; i < combinedIds.length; i++) {
       const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
-      result.concat(messages)
+      result = result.concat(messages)
     }
     for (let i = 0; i < result.length; i++) {
       console.log('upsering', i);
