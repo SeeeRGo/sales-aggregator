@@ -60,7 +60,10 @@ const parseMessages = (messages, startDate, endDate, chatId) => messages
     date,
     entities,
     message
-  }) => ({ messageId: `${id}${chatId}`, text: message, entities, date })
+  }) => {
+    const chatIdParsed = chatId instanceof Api.InputPeerUser ? chatId.userId : chatId
+      return ({ messageId: `${id}${chatIdParsed}`, text: message, entities, date });
+    }
 );
 
 const createMessagesForDB = (messages, chatId, chatName) => messages.map(
@@ -70,7 +73,7 @@ const createMessagesForDB = (messages, chatId, chatName) => messages.map(
     entities,
     message
   }) => ({
-    tg_message_id: `${id}${chatId}`, text: message, entities, message_date: date, tg_chat_name: chatName })
+    tg_message_id: `${id}${chatId}`, text: message, entities, message_date: date, tg_chat_name: chatName, id })
 )
 
 const getLatestHistory = async (chatId, chatName) => {
@@ -79,7 +82,22 @@ const getLatestHistory = async (chatId, chatName) => {
     peer: chatId,
     limit: 50,
   }));
-  return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > fiveMinutes)
+  const latestMessages = createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > fiveMinutes)
+  const result = await Promise.all(latestMessages.map(async ({ id, ...rest }) => {
+    try {
+      const { link } = await client.invoke(new Api.channels.ExportMessageLink({ id, channel: chatId }));
+      console.log('link', link);
+      return {
+        ...rest,
+        link,
+      }
+    } catch (e) {
+      console.log('error', e);
+      return rest 
+    }
+
+  }))
+  return result
 }
 const getFullHistory = async (chatId, chatName) => {
   const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
@@ -242,19 +260,19 @@ app.listen(port, async () => {
       await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
   });
-  // setInterval(async () => {
-  //   const combinedChats = await getCombinedChats()
+  setInterval(async () => {
+    const combinedChats = await getCombinedChats()
 
-  //   const result = []
-  //   for (let i = 0; i < combinedIds.length; i++) {
-  //     const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
-  //     result.push(messages)
-  //   }
-  //   for (let i = 0; i < result.length; i++) {
-  //     console.log('upsering', i);
-  //     await supabase.from('messages').upsert(result[i])
-  //   }
-  // }, 3 * 60 * 1000)
+    const result = []
+    for (let i = 0; i < combinedIds.length; i++) {
+      const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
+      result.concat(messages)
+    }
+    for (let i = 0; i < result.length; i++) {
+      console.log('upsering', i);
+      await supabase.from('messages').upsert(result[i])
+    }
+  }, 3 * 60 * 1000)
   
   console.log(`index.js listening at http://localhost:${port}`);
 });
