@@ -65,6 +65,7 @@ const chatIds = [
   -1001987345789,
   -1001594836876,
   -1001589732488,
+  -1001521293710,
 ];
 const userIds = [
   new Api.InputPeerUser({"userId":BigInt("5377945958"),"accessHash":BigInt("-6137347072698466900")}),
@@ -265,7 +266,9 @@ app.use((req, res, next) => {
 app.get("/chats", async (_, res) => {
     try {
       const result = await client.getDialogs();
-      const parsedResult = result.filter(({ id }) => userIds.find(user => `${id}` === `${user.userId}`) || chatIds.find(chatId => `${chatId}` === `${id}`)).map(({ id, name, title, entity: { accessHash } }) => ({ id, name, title, accessHash }))
+      const parsedResult = result
+        .filter(({ id }) => userIds.find(user => `${id}` === `${user.userId}`) || chatIds.find(chatId => `${chatId}` === `${id}`))
+        .map(({ id, name, title, entity: { accessHash } }) => ({ id, name, title, accessHash }))
 
       res.send(parsedResult);
     } catch (e) {
