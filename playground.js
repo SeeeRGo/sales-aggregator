@@ -1,3 +1,4 @@
+// Канал IT Test || Partners
 const express = require("express");
 const app = express();
 const dayjs = require("dayjs");
@@ -5,7 +6,6 @@ const dotenv = require("dotenv");
 const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
-const { message } = require("telegram/client");
 const { createClient } = require('@supabase/supabase-js')
 
 dotenv.config();
@@ -13,73 +13,6 @@ const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const stringSession = new StringSession(process.env.STRING_SESSION); // fill this later with the value from session.save()
 
-const chatIds = [
-  -1001254597341,
-  -1001259051878,
-  -1001478880423,
-  -1001489061924,
-  -1001211051969,
-  -1001306794802,
-  -1001773534346,
-  -1001289197989,
-  -1001315524793,
-  -1001332690767,
-  -1001795499242,
-  -1001517966409,
-  -1001294009783,
-  -1001518770876,
-  -1001949901742,
-  -1001512507088,
-  -1001656664424,
-  -1001244373622,
-  -1001076312571,
-  -1001612984186,
-  -1001570400379,
-  -1001120611331,
-  -1001727398064,
-  -1001666172044,
-  -1001139345092,
-  -1001516827892,
-  -1001684315574,
-  -1001513463322,
-  -1001527372844,
-  -1001522971705,
-  -1001284121152,
-  -1001445071488,
-  -1001548632083,
-  -1001403624445,
-  -1001859586999,
-  -1001201636422,
-  -1001857651809,
-  -1001706094161,
-  -1001376858073,
-  -1001890913210,
-  -1001391497838,
-  -1001391347473,
-  -1001502018760,
-  -1001625727469,
-  -1001669423143,
-  -1001751281898,
-  -1001357786906,
-  -1001451069977,
-  -1001987345789,
-  -1001594836876,
-  -1001589732488,
-  -1001521293710,
-];
-const userIds = [
-  new Api.InputPeerUser({"userId":BigInt("5377945958"),"accessHash":BigInt("-6137347072698466900")}),
-  new Api.InputPeerUser({"userId":BigInt("5357693474"),"accessHash":BigInt("1864063971774782801")}),
-  new Api.InputPeerUser({"userId":BigInt("5709595227"),"accessHash":BigInt("9025693265906860855")}),
-  new Api.InputPeerUser({"userId":BigInt("5596230697"),"accessHash":BigInt("1733381136733274207")}),
-  new Api.InputPeerUser({"userId":BigInt("5029183441"),"accessHash":BigInt("4467967627617849310")}),
-]
-
-const combinedIds = chatIds.concat(userIds)
-
-// const accessHashes = [-6834854159469753124, -6055207872981864269, 8050414125024882872, 2071332180262217027, 2219870631779647460, -6273813176736408380,-5920906890419123166,-7810775977581075226,6053859012847446570,8687262491798429562,5233860802200827946,-505664746947020117,4221985370143303253,610250252856290507,8364562225157752385,3267768143761883883,5615007317366749093,-6372466980253608032,1438853615417610124,-7271687720081094371,1190566383691495979,844794807331127875,-3767227939808568650,-5922685839852522654,-2666691390116925434,-6434053341823851427,6403435223049717511,6588512478603116857,4180695193341251330,5661531200345590951,7747668825449114971,-5966010701022667524,-1619032134680908706,8761032431890758820]
-
-// const chatIds = ["1254597341","1259051878","1478880423","1489061924","1211051969","1306794802","1773534346","1315524793","1332690767","1294009783","1244373622","1076312571","1612984186","1570400379","1120611331","1727398064","1666172044","1139345092","1516827892","1684315574","1527372844","1284121152","1445071488","1548632083","1403624445","1706094161","1376858073","1391497838","1391347473","1502018760","1751281898","1357786906","1451069977","1987345789"]
 const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
@@ -104,29 +37,6 @@ const createMessagesForDB = (messages, chatId, chatName) => messages.map(
     }
 )
 
-const getLatestHistory = async (chatId, chatName) => {
-  const fiveMinutes = dayjs().add(-5, "minutes").unix();
-  const { messages } = await client.invoke(new Api.messages.GetHistory({
-    peer: chatId,
-    limit: 50,
-  }));
-  const latestMessages = createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > fiveMinutes)
-  const result = await Promise.all(latestMessages.map(async ({ id, ...rest }) => {
-    try {
-      const { link } = await client.invoke(new Api.channels.ExportMessageLink({ id, channel: chatId }));
-      console.log('link', link);
-      return {
-        ...rest,
-        link,
-      }
-    } catch (e) {
-      console.log('error', e);
-      return rest 
-    }
-
-  }))
-  return result
-}
 const getFullHistory = async (chatId, chatName) => {
   const monthAgo = dayjs().startOf("day").unix();
   const { messages } = await client.invoke(new Api.messages.GetHistory({
@@ -179,6 +89,24 @@ app.use((req, res, next) => {
 //   }
 // });
 
+app.post('/add', async (req, res) => {
+  try {
+    const result = await client.getDialogs();
+    const targetChatName = req.body.chat_name
+    const targetChat = result.find(({ name, title }) => name === targetChatName && title === targetChatName)
+    if (targetChat) {
+      res.send({
+        id: targetChat.id, name: targetChat.name, title: targetChat.title, accessHash: targetChat.entity.accessHash
+      })
+    } else {
+      res.send("Chat not found")
+    }
+  } catch (e) {
+    console.log("error", e);
+    res.send("Something went wrong");
+  }
+})
+
 app.get("/chats", async (_, res) => {
     try {
       const result = await client.getDialogs();
@@ -229,20 +157,6 @@ app.listen(port, async () => {
     phoneCode: async () =>
       await input.text("Please enter the code you received: "),
     onError: (err) => console.log(err),
-  });
-  setInterval(async () => {
-    const combinedChats = await getCombinedChats()
-
-    let result = []
-    for (let i = 0; i < combinedIds.length; i++) {
-      const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
-      result = result.concat(messages)
-    }
-    for (let i = 0; i < result.length; i++) {
-      console.log('upsering', i);
-      await supabase.from('messages').upsert(result[i])
-    }
-  }, 3 * 60 * 1000)
-  
+  });  
   console.log(`index.js listening at http://localhost:${port}`);
 });

@@ -1,176 +1,232 @@
-// const express = require("express");
-// const app = express();
-// const dotenv = require("dotenv");
-// const dayjs = require("dayjs");
-// const { Client } = require("tdl");
-// const { TDLib } = require("tdl-tdlib-addon");
+const express = require("express");
+const app = express();
+const dayjs = require("dayjs");
+const dotenv = require("dotenv");
+const { TelegramClient, Api } = require("telegram");
+const { StringSession } = require("telegram/sessions");
+const input = require("input");
+const { createClient } = require('@supabase/supabase-js')
 
-// dotenv.config();
-// const client = new Client(new TDLib(process.env.LIB_PATH), {
-//   apiId: process.env.API_ID, // Your api_id, get it at http://my.telegram.org/
-//   apiHash: process.env.API_HASH, // Your api_hash
-// });
+dotenv.config();
+const apiId = parseInt(process.env.API_ID);
+const apiHash = process.env.API_HASH;
+const stringSession = new StringSession(process.env.STRING_SESSION); // fill this later with the value from session.save()
 
-// client.on("error", console.error);
-// // client.on('update', update => {
-// //   console.log('Received update:', update)
-// // })
-// const chatIds = [
-//   -1001254597341, -1001259051878, -1001478880423, -1001489061924,
-//   -1001211051969, -1001306794802, -1001773534346, -1001315524793,
-//   -1001332690767, -1001294009783, 5377945958, -1001512507088, 5357693474,
-//   -1001244373622, -1001076312571, -1001612984186, -1001570400379,
-//   -1001120611331, -1001727398064, -1001666172044, -1001139345092,
-//   -1001516827892, -1001684315574, -1001527372844, -1001284121152,
-//   -1001445071488, -1001548632083, -1001403624445, -1001706094161,
-//   -1001376858073, -1001391497838, -1001391347473, -1001502018760,
-//   -1001211051969, -1001751281898, -1001357786906, -1001451069977,
-//   // -1001080132414, // Засирает ленту просто сообщениями
-//   -1001987345789,
-// ];
-// // const chatId = 777000
-// const getChatHistoryFromDate = async (chatId, startDate, endDate) => {
-//   const { id: latestTimeframeMessageId } = await client.invoke({
-//     _: "getChatMessageByDate",
-//     chat_id: chatId,
-//     date: endDate,
-//   });
-//   const { messages } = await client.invoke({
-//     _: "getChatHistory",
-//     chat_id: chatId,
-//     from_message_id: latestTimeframeMessageId,
-//     limit: 100,
-//     offset: -1,
-//   });
-//   const result = messages
-//     .filter(({ date, content: { text } }) => text && date > startDate)
-//     .map(
-//       ({
-//         id,
-//         chat_id,
-//         date,
-//         content: {
-//           text: { text, entities },
-//         },
-//       }) => ({ messageId: `${id}${chatId}`, text, entities, date })
-//     );
-//   return result;
-// };
+const chatIds = [
+  -1001254597341,
+  -1001259051878,
+  -1001478880423,
+  -1001489061924,
+  -1001211051969,
+  -1001306794802,
+  -1001773534346,
+  -1001289197989,
+  -1001315524793,
+  -1001332690767,
+  -1001795499242,
+  -1001517966409,
+  -1001294009783,
+  -1001518770876,
+  -1001949901742,
+  -1001512507088,
+  -1001656664424,
+  -1001244373622,
+  -1001076312571,
+  -1001612984186,
+  -1001570400379,
+  -1001120611331,
+  -1001727398064,
+  -1001666172044,
+  -1001139345092,
+  -1001516827892,
+  -1001684315574,
+  -1001513463322,
+  -1001527372844,
+  -1001522971705,
+  -1001284121152,
+  -1001445071488,
+  -1001548632083,
+  -1001403624445,
+  -1001859586999,
+  -1001201636422,
+  -1001857651809,
+  -1001706094161,
+  -1001376858073,
+  -1001890913210,
+  -1001391497838,
+  -1001391347473,
+  -1001502018760,
+  -1001625727469,
+  -1001669423143,
+  -1001751281898,
+  -1001357786906,
+  -1001451069977,
+  -1001987345789,
+  -1001594836876,
+  -1001589732488,
+  -1001521293710,
+  -1001803850016,
+];
+const userIds = [
+  new Api.InputPeerUser({"userId":BigInt("5377945958"),"accessHash":BigInt("-6137347072698466900")}),
+  new Api.InputPeerUser({"userId":BigInt("5357693474"),"accessHash":BigInt("1864063971774782801")}),
+  new Api.InputPeerUser({"userId":BigInt("5709595227"),"accessHash":BigInt("9025693265906860855")}),
+  new Api.InputPeerUser({"userId":BigInt("5596230697"),"accessHash":BigInt("1733381136733274207")}),
+  new Api.InputPeerUser({"userId":BigInt("5029183441"),"accessHash":BigInt("4467967627617849310")}),
+]
 
-// async function getMessages() {
-//   // await client.login(); // UNCOMMENT FOR INITIAL START
-//   // const chats = await client.invoke({
-//   //   _: "getChats",
-//   //   chat_list: { _: "chatListMain" },
-//   //   limit: 99,
-//   // }); // UNCOMMENT FOR INITIAL START TOO
-//   const chatsInfo = [];
-//   for (let i = 0; i < chatIds.length; i++) {
-//     const { id, title } = await client.invoke({
-//       _: "getChat",
-//       chat_id: chatIds[i],
-//     });
-//     chatsInfo.push(title);
-//   }
+const combinedIds = chatIds.concat(userIds)
 
-//   // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
-//   let lastHourMessages = [];
-//   let lastFourHourMessages = [];
-//   let lastDayMessages = [];
-//   let olderMessages = [];
-//   for (let i = 0; i < chatIds.length; i++) {
-//     const hourAgo = dayjs().add(-1, "hour").unix();
-//     const fourHoursAgo = dayjs().add(-4, "hour").unix();
-//     const dayAgo = dayjs().add(-1, "day").unix();
-//     const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
-//     const lastHourHistory = await getChatHistoryFromDate(
-//       chatIds[i],
-//       hourAgo,
-//       dayjs().unix()
-//     );
-//     const lastFourHoursHistory = await getChatHistoryFromDate(
-//       chatIds[i],
-//       fourHoursAgo,
-//       hourAgo
-//     );
-//     const lastDayHistory = await getChatHistoryFromDate(
-//       chatIds[i],
-//       dayAgo,
-//       fourHoursAgo
-//     );
-//     const olderHistory = await getChatHistoryFromDate(
-//       chatIds[i],
-//       monthAgo,
-//       dayAgo
-//     );
+const client = new TelegramClient(stringSession, apiId, apiHash, {
+  connectionRetries: 5,
+});
 
-//     lastHourMessages = lastHourMessages.concat(
-//       lastHourHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-//     );
+// Create a single supabase client for interacting with your database
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+);
 
-//     lastFourHourMessages = lastFourHourMessages.concat(
-//       lastFourHoursHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-//     );
+const createMessagesForDB = (messages, chatId, chatName) => messages.map(
+  ({
+    id,
+    date,
+    entities,
+    message
+  }) => {
+      const chatIdParsed = chatId instanceof Api.InputPeerUser ? chatId.userId : chatId
+      return ({
+        tg_message_id: `${id}${chatIdParsed}`, text: message, entities, message_date: date, tg_chat_name: chatName, id
+      });
+    }
+)
 
-//     lastDayMessages = lastDayMessages.concat(
-//       lastDayHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-//     );
+const getLatestHistory = async (chatId, chatName) => {
+  const fiveMinutes = dayjs().add(-5, "minutes").unix();
+  const { messages } = await client.invoke(new Api.messages.GetHistory({
+    peer: chatId,
+    limit: 50,
+  }));
+  const latestMessages = createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > fiveMinutes)
+  const result = await Promise.all(latestMessages.map(async ({ id, ...rest }) => {
+    try {
+      const { link } = await client.invoke(new Api.channels.ExportMessageLink({ id, channel: chatId }));
+      console.log('link', link);
+      return {
+        ...rest,
+        link,
+      }
+    } catch (e) {
+      console.log('error', e);
+      return rest 
+    }
 
-//     olderMessages = olderMessages.concat(
-//       olderHistory.map((res) => ({ ...res, chatName: chatsInfo[i] }))
-//     );
-//   }
+  }))
+  return result
+}
+const getFullHistory = async (chatId, chatName) => {
+  const monthAgo = dayjs().startOf("day").unix();
+  const { messages } = await client.invoke(new Api.messages.GetHistory({
+    peer: chatId,
+    limit: 300,
+  }));
+  return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > monthAgo)
+}
 
-//   return {
-//     lastHourMessages,
-//     lastFourHourMessages,
-//     lastDayMessages,
-//     olderMessages,
-//     chatsInfo,
-//   };
-//   // await client.close()
-// }
+async function getCombinedChats() {
+  const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
+  const users = await client.invoke(new Api.users.GetUsers({ id: userIds}))
+  const usersInfo = users.map(({ firstName }, i) => firstName ?? 'Unknown channel ' + i)
+  const chatsInfo = chats.map(({ title }) => title)
+  const combinedChats = chatsInfo.concat(usersInfo)
+  return combinedChats
+}
 
-// app.use(
-//   express.urlencoded({
-//     extended: true,
-//   })
-// );
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
-// app.use(express.json());
+app.use(express.json());
 
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested, Content-Type, Accept Authorization"
-//   );
-//   if (req.method === "OPTIONS") {
-//     res.header("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE");
-//     return res.status(200).json({});
-//   }
-//   next();
-// });
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested, Content-Type, Accept Authorization"
+  );
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE");
+    return res.status(200).json({});
+  }
+  next();
+});
 
-// app.get("/", async (_, res) => {
-//   try {
-//     const messages = await getMessages();
-//     res.send(messages);
-//   } catch (e) {
-//     console.log("error", e);
-//     res.send({});
-//   }
-// });
+app.get("/chats", async (_, res) => {
+    try {
+      const result = await client.getDialogs();
+      const parsedResult = result
+        .filter(({ id }) => userIds.find(user => `${id}` === `${user.userId}`) || chatIds.find(chatId => `${chatId}` === `${id}`))
+        .map(({ id, name, title, entity: { accessHash } }) => ({ id, name, title, accessHash }))
 
-// // /////////////////////////////////////////////////////////////////////////////
-// // Catch all handler for all other request.
-// app.use("*", (req, res) => {
-//   res.sendStatus(404).end();
-// });
+      res.send(parsedResult);
+    } catch (e) {
+      console.log("error", e);
+      res.send({});
+    }
+})
 
-// // /////////////////////////////////////////////////////////////////////////////
-// // Start the server
-// const port = process.env.PORT || 5000;
-// app.listen(port, () => {
-//   console.log(`index.js listening at http://localhost:${port}`);
-// });
+app.get("/full", async (_, res) => {
+  try {
+    const combinedChats = await getCombinedChats()
+
+    let result = []
+    for (let i = 0; i < combinedIds.length; i++) {
+      const messages = await getFullHistory(combinedIds[i], combinedChats[i]);
+      result = result.concat(messages)
+    }
+    for (let i = 0; i < result.length; i++) {
+      console.log('upsering', result[i].tg_message_id);
+      await supabase.from('messages').insert(result[i])
+    }
+    res.send('OK');
+  } catch (e) {
+    console.log("error", e);
+    res.send({});
+  }
+});
+
+// /////////////////////////////////////////////////////////////////////////////
+// Catch all handler for all other request.
+app.use("*", (req, res) => {
+  res.sendStatus(404).end();
+});
+
+// /////////////////////////////////////////////////////////////////////////////
+// Start the server
+const port = process.env.PORT || 5000;
+app.listen(port, async () => {
+  await client.start({
+    phoneNumber: async () => await input.text("Please enter your number: "),
+    password: async () => await input.text("Please enter your password: "),
+    phoneCode: async () =>
+      await input.text("Please enter the code you received: "),
+    onError: (err) => console.log(err),
+  });
+  setInterval(async () => {
+    const combinedChats = await getCombinedChats()
+
+    let result = []
+    for (let i = 0; i < combinedIds.length; i++) {
+      const messages = await getLatestHistory(combinedIds[i], combinedChats[i]);
+      result = result.concat(messages)
+    }
+    for (let i = 0; i < result.length; i++) {
+      console.log('upsering', i);
+      await supabase.from('messages').upsert(result[i])
+    }
+  }, 3 * 60 * 1000)
+  
+  console.log(`index.js listening at http://localhost:${port}`);
+});
