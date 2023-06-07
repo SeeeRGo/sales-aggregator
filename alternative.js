@@ -85,10 +85,10 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
 });
 
 // Create a single supabase client for interacting with your database
-// const supabase = createClient(
-//   process.env.SUPABASE_URL,
-//   process.env.SUPABASE_ANON_KEY,
-// );
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+);
 
 
 const parseMessages = (messages, startDate, endDate, chatId) => messages
