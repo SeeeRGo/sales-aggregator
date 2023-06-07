@@ -85,10 +85,10 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
 });
 
 // Create a single supabase client for interacting with your database
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-);
+// const supabase = createClient(
+//   process.env.SUPABASE_URL,
+//   process.env.SUPABASE_ANON_KEY,
+// );
 
 
 const parseMessages = (messages, startDate, endDate, chatId) => messages
@@ -111,8 +111,12 @@ const createMessagesForDB = (messages, chatId, chatName) => messages.map(
     date,
     entities,
     message
-  }) => ({
-    tg_message_id: `${id}${chatId}`, text: message, entities, message_date: date, tg_chat_name: chatName, id })
+  }) => {
+      const chatIdParsed = chatId instanceof Api.InputPeerUser ? chatId.userId : chatId
+      return ({
+        tg_message_id: chatIdParsed, text: message, entities, message_date: date, tg_chat_name: chatName, id
+      });
+    }
 )
 
 const getLatestHistory = async (chatId, chatName) => {
@@ -255,8 +259,11 @@ app.use((req, res, next) => {
 
 // app.get("/", async (_, res) => {
 //   try {
-//     const result = await client.invoke(new Api.channels.ExportMessageLink({ id: 6665, channel:-1001612984186 }));
-//     res.send(result);
+//     const chats = await getCombinedChats()
+//     res.send(chats.map(chatId => ({
+//           old: chatId instanceof Api.InputPeerUser ? chatId.userId : chatId,
+//           new:  typeof chatId === 'object' && 'userId' in chatId ? chatId.userId : chatId
+//     })));
 //   } catch (e) {
 //     console.log("error", e);
 //     res.send({});
