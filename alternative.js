@@ -90,21 +90,6 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY,
 );
 
-
-const parseMessages = (messages, startDate, endDate, chatId) => messages
-.filter(({ date, message }) => message && date > startDate && date < endDate)
-.map(
-  ({
-    id,
-    date,
-    entities,
-    message
-  }) => {
-    const chatIdParsed = chatId instanceof Api.InputPeerUser ? chatId.userId : chatId
-      return ({ messageId: `${id}${chatIdParsed}`, text: message, entities, date });
-    }
-);
-
 const createMessagesForDB = (messages, chatId, chatName) => messages.map(
   ({
     id,
@@ -114,13 +99,13 @@ const createMessagesForDB = (messages, chatId, chatName) => messages.map(
   }) => {
       const chatIdParsed = chatId instanceof Api.InputPeerUser ? chatId.userId : chatId
       return ({
-        tg_message_id: chatIdParsed, text: message, entities, message_date: date, tg_chat_name: chatName, id
+        tg_message_id: `${id}${chatIdParsed}`, text: message, entities, message_date: date, tg_chat_name: chatName, id
       });
     }
 )
 
 const getLatestHistory = async (chatId, chatName) => {
-  const fiveMinutes = dayjs().add(-5, "minutes").unix();
+  const fiveMinutes = dayjs().add(-5, "hours").unix();
   const { messages } = await client.invoke(new Api.messages.GetHistory({
     peer: chatId,
     limit: 50,
@@ -143,34 +128,13 @@ const getLatestHistory = async (chatId, chatName) => {
   return result
 }
 const getFullHistory = async (chatId, chatName) => {
-  const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
+  const monthAgo = dayjs().startOf("day").unix();
   const { messages } = await client.invoke(new Api.messages.GetHistory({
     peer: chatId,
     limit: 300,
   }));
   return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > monthAgo)
 }
-
-const getChatHistoryFromDate = async (chatId) => {
-  const hourAgo = dayjs().add(-1, "hour").unix();
-  const fourHoursAgo = dayjs().add(-4, "hour").unix();
-  const dayAgo = dayjs().add(-1, "day").unix();
-  const monthAgo = dayjs().add(-1, "month").startOf("day").unix();
-  const { messages } = await client.invoke(new Api.messages.GetHistory({
-    peer: chatId,
-    limit: 300,
-  }));
-  const lastHourHistory = parseMessages(messages, hourAgo, dayjs().unix(), chatId);
-  const lastFourHoursHistory = parseMessages(messages, fourHoursAgo, hourAgo, chatId);
-  const lastDayHistory = parseMessages(messages, dayAgo, fourHoursAgo, chatId);
-  const olderHistory = parseMessages(messages, monthAgo, dayAgo, chatId);
-  return {
-    lastHourHistory,
-    lastFourHoursHistory,
-    lastDayHistory,
-    olderHistory,
-  };
-};
 
 async function getCombinedChats() {
   const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
@@ -180,61 +144,6 @@ async function getCombinedChats() {
   const combinedChats = chatsInfo.concat(usersInfo)
   return combinedChats
 }
-
-
-async function getMessages() {
-  // await client.login(); // UNCOMMENT FOR INITIAL START
-  // const chats = await client.invoke({
-  //   _: "getChats",
-  //   chat_list: { _: "chatListMain" },
-  //   limit: 99,
-  // }); // UNCOMMENT FOR INITIAL START TOO
-
-  const combinedChats = await getCombinedChats()
-
-// const chatsInfo = []
-  // GET ALL TODAY'S MESSAGES FOR EVERY CHAT
-  let lastHourMessages = [];
-  let lastFourHourMessages = [];
-  let lastDayMessages = [];
-  let olderMessages = [];
-  for (let i = 0; i < combinedIds.length; i++) {
-    const {
-      lastHourHistory,
-      lastFourHoursHistory,
-      lastDayHistory,
-      olderHistory,
-    } = await getChatHistoryFromDate(
-      combinedIds[i],
-    );
-
-  lastHourMessages = lastHourMessages.concat(
-    lastHourHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
-  );
-
-  lastFourHourMessages = lastFourHourMessages.concat(
-    lastFourHoursHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
-  );
-
-  lastDayMessages = lastDayMessages.concat(
-    lastDayHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
-  );
-
-  olderMessages = olderMessages.concat(
-    olderHistory.map((res) => ({ ...res, chatName: combinedChats[i] }))
-  );
-  }
-
-  return {
-    lastHourMessages,
-    lastFourHourMessages,
-    lastDayMessages,
-    olderMessages,
-    chatsInfo: combinedChats,
-  };
-
-}
-
 
 app.use(
   express.urlencoded({
@@ -284,24 +193,25 @@ app.get("/chats", async (_, res) => {
     }
 })
 
-// app.get("/full", async (_, res) => {
-//   try {
-//     const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
-//     const chatsInfo = chats.map(({ title }) => title)
-//     const result = []
-//     for (let i = 0; i < chatIds.length; i++) {
-//       const messages = await getFullHistory(chatIds[i], chatsInfo[i]);
-//       result.push(messages)
-//     }
-//     for (let i = 0; i < result.length; i++) {
-//       await supabase.from('messages').upsert(result[i])
-//     }
-//     res.send('OK');
-//   } catch (e) {
-//     console.log("error", e);
-//     res.send({});
-//   }
-// });
+app.get("/full", async (_, res) => {
+  try {
+    const combinedChats = await getCombinedChats()
+
+    let result = []
+    for (let i = 0; i < combinedIds.length; i++) {
+      const messages = await getFullHistory(combinedIds[i], combinedChats[i]);
+      result = result.concat(messages)
+    }
+    for (let i = 0; i < result.length; i++) {
+      console.log('upsering', result[i].tg_message_id);
+      await supabase.from('messages').insert(result[i])
+    }
+    res.send('OK');
+  } catch (e) {
+    console.log("error", e);
+    res.send({});
+  }
+});
 
 // /////////////////////////////////////////////////////////////////////////////
 // Catch all handler for all other request.
