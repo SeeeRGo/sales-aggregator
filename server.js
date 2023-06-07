@@ -102,7 +102,7 @@ const createMessagesForDB = (messages, chatId, chatName) => messages.map(
 )
 
 const getLatestHistory = async (chatId, chatName) => {
-  const fiveMinutes = dayjs().add(-5, "minutes").unix();
+  const fiveMinutes = dayjs().add(-5, "hours").unix();
   const { messages } = await client.invoke(new Api.messages.GetHistory({
     peer: chatId,
     limit: 50,
