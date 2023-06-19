@@ -131,6 +131,38 @@ app.get("/chats", async (_, res) => {
     }
 })
 
+app.post('/add', async (req, res) => {
+  try {
+    const result = await client.getDialogs();
+    const targetChatName = req.body.chat_name
+    const targetShouldTrack = req.body.should_track
+    if (targetShouldTrack) {
+      const targetChat = result.find(({ name, title }) => name === targetChatName && title === targetChatName)
+      if (targetChat) {
+        await supabase.from('channels').insert({
+          tgChannelId: targetChat.id,
+          channelName: targetChat.name,
+          channelType: targetChat.isChannel ? 'CHANNEL' : 'BOT',
+          accessHash: targetChat.isUser ? targetChat.entity.accessHash : null,
+          isTracked: true
+        })
+        res.send('OK')
+      } else {
+        res.send("Chat not found")
+      }
+    } else {
+      await supabase.from('channels').insert({
+        channelName: targetChatName,
+        channelType: 'CHAT'
+      })
+      res.send('OK')
+    }
+  } catch (e) {
+    console.log("error", e);
+    res.send("Something went wrong");
+  }
+})
+
 app.get("/full", async (_, res) => {
   try {
     const combinedChats = await getCombinedChats()

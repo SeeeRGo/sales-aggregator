@@ -191,7 +191,7 @@ app.get("/chats", async (_, res) => {
     try {
       const result = await client.getDialogs();
       const parsedResult = result
-        .filter(({ id }) => userIds.find(user => `${id}` === `${user.userId}`) || chatIds.find(chatId => `${chatId}` === `${id}`))
+        // .filter(({ id }) => userIds.find(user => `${id}` === `${user.userId}`) || chatIds.find(chatId => `${chatId}` === `${id}`))
         .map(({ id, name, title, entity: { accessHash } }) => ({ id, name, title, accessHash }))
 
       res.send(parsedResult);
