@@ -13,6 +13,71 @@ const apiId = parseInt(process.env.API_ID);
 const apiHash = process.env.API_HASH;
 const stringSession = new StringSession(process.env.STRING_SESSION); // fill this later with the value from session.save()
 
+const chatIds = [
+  -1001254597341,
+  -1001259051878,
+  -1001478880423,
+  -1001489061924,
+  -1001211051969,
+  -1001306794802,
+  -1001773534346,
+  -1001289197989,
+  -1001315524793,
+  -1001332690767,
+  -1001795499242,
+  -1001517966409,
+  -1001294009783,
+  -1001518770876,
+  -1001949901742,
+  -1001512507088,
+  -1001656664424,
+  -1001244373622,
+  -1001076312571,
+  -1001612984186,
+  -1001570400379,
+  -1001120611331,
+  -1001727398064,
+  -1001666172044,
+  -1001139345092,
+  -1001516827892,
+  -1001684315574,
+  -1001513463322,
+  -1001527372844,
+  -1001522971705,
+  -1001284121152,
+  -1001445071488,
+  -1001548632083,
+  -1001403624445,
+  -1001859586999,
+  -1001201636422,
+  -1001857651809,
+  -1001706094161,
+  -1001376858073,
+  -1001890913210,
+  -1001391497838,
+  -1001391347473,
+  -1001502018760,
+  -1001625727469,
+  -1001669423143,
+  -1001751281898,
+  -1001357786906,
+  -1001451069977,
+  -1001987345789,
+  -1001594836876,
+  -1001589732488,
+  -1001521293710,
+  -1001803850016,
+];
+const userIds = [
+  new Api.InputPeerUser({"userId":BigInt("5377945958"),"accessHash":BigInt("-6137347072698466900")}),
+  new Api.InputPeerUser({"userId":BigInt("5357693474"),"accessHash":BigInt("1864063971774782801")}),
+  new Api.InputPeerUser({"userId":BigInt("5709595227"),"accessHash":BigInt("9025693265906860855")}),
+  new Api.InputPeerUser({"userId":BigInt("5596230697"),"accessHash":BigInt("1733381136733274207")}),
+  new Api.InputPeerUser({"userId":BigInt("5029183441"),"accessHash":BigInt("4467967627617849310")}),
+]
+
+const combinedIds = chatIds.concat(userIds)
+
 const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
@@ -91,7 +156,7 @@ app.use((req, res, next) => {
 
 app.post('/add', async (req, res) => {
   try {
-    const result = await client.getDialogs();
+    const result = await getCombinedChats();
     const targetChatName = req.body.chat_name
     const targetChat = result.find(({ name, title }) => name === targetChatName && title === targetChatName)
     if (targetChat) {
@@ -101,6 +166,21 @@ app.post('/add', async (req, res) => {
     } else {
       res.send("Chat not found")
     }
+  } catch (e) {
+    console.log("error", e);
+    res.send("Something went wrong");
+  }
+})
+app.get('/update', async (req, res) => {
+  try {
+    for(let i = 0; i < combinedIds.length; i++) {
+      const chatIdParsed = combinedIds[i] instanceof Api.InputPeerUser ?  combinedIds[i].userId :  combinedIds[i]
+      await supabase
+        .from('channels')
+        .update({ isTracked: true })
+        .eq('tgChannelId', chatIdParsed)
+    }
+    res.send('OK')
   } catch (e) {
     console.log("error", e);
     res.send("Something went wrong");
