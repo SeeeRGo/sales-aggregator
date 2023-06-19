@@ -173,12 +173,12 @@ app.post('/add', async (req, res) => {
 })
 app.get('/update', async (req, res) => {
   try {
-    for(let i = 0; i < combinedIds.length; i++) {
-      const chatIdParsed = combinedIds[i] instanceof Api.InputPeerUser ?  combinedIds[i].userId :  combinedIds[i]
+    for(let i = 0; i < userIds.length; i++) {
+      const { userId, accessHash } = userIds[i]
       await supabase
         .from('channels')
-        .update({ isTracked: true })
-        .eq('tgChannelId', chatIdParsed)
+        .update({ accessHash: `${accessHash}` })
+        .eq('tgChannelId', userId)
     }
     res.send('OK')
   } catch (e) {
