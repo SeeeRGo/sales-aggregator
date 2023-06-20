@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const dayjs = require("dayjs");
 const dotenv = require("dotenv");
+const cors = require('cors');
 const { TelegramClient, Api } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
@@ -100,21 +101,21 @@ app.use(
     extended: true,
   })
 );
-
+app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested, Content-Type, Accept Authorization"
-  );
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE");
-    return res.status(200).json({});
-  }
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested, Content-Type, Accept Authorization"
+//   );
+//   if (req.method === "OPTIONS") {
+//     res.header("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE");
+//     return res.status(200).json({});
+//   }
+//   next();
+// });
 
 app.get("/chats", async (_, res) => {
     try {
@@ -144,7 +145,10 @@ app.post('/add', async (req, res) => {
           channelName: targetChat.name,
           channelType: targetChat.isChannel ? 'CHANNEL' : 'BOT',
           accessHash: targetChat.isUser ? targetChat.entity.accessHash : null,
-          isTracked: true
+          isTracked: true,
+          channelLink: '',
+          comment: '',
+          upstreamPartners: ''
         })
         res.send('OK')
       } else {
@@ -153,7 +157,10 @@ app.post('/add', async (req, res) => {
     } else {
       await supabase.from('channels').insert({
         channelName: targetChatName,
-        channelType: 'CHAT'
+        channelType: 'CHAT',
+        channelLink: '',
+        comment: '',
+        upstreamPartners: ''
       })
       res.send('OK')
     }

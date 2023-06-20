@@ -2,6 +2,7 @@
   "dependencies": {
     "@mtproto/core": "^6.2.0",
     "@supabase/supabase-js": "^2.22.0",
+    "cors": "^2.8.5",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
