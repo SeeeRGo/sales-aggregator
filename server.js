@@ -79,21 +79,27 @@ const getLatestHistory = async (chatId, chatName) => {
   return result
 }
 const getFullHistory = async (chatId, chatName) => {
-  const monthAgo = dayjs().startOf("day").unix();
+  const offsetDate = dayjs().add(-3, 'day').startOf("day").unix();
   const { messages } = await client.invoke(new Api.messages.GetHistory({
     peer: chatId,
     limit: 300,
   }));
-  return createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > monthAgo)
-}
+  const latestMessages = createMessagesForDB(messages, chatId, chatName).filter(({ message_date, text }) => text && message_date > offsetDate)
+  const result = await Promise.all(latestMessages.map(async ({ id, ...rest }) => {
+    try {
+      const { link } = await client.invoke(new Api.channels.ExportMessageLink({ id, channel: chatId }));
+      console.log('link', link);
+      return {
+        ...rest,
+        link,
+      }
+    } catch (e) {
+      console.log('error', e);
+      return rest 
+    }
 
-async function getCombinedChats() {
-  const { chats } = await client.invoke(new Api.channels.GetChannels({ id: chatIds }));
-  const users = await client.invoke(new Api.users.GetUsers({ id: userIds}))
-  const usersInfo = users.map(({ firstName }, i) => firstName ?? 'Unknown channel ' + i)
-  const chatsInfo = chats.map(({ title }) => title)
-  const combinedChats = chatsInfo.concat(usersInfo)
-  return combinedChats
+  }))
+  return result
 }
 
 app.use(
@@ -103,19 +109,6 @@ app.use(
 );
 app.use(cors());
 app.use(express.json());
-
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested, Content-Type, Accept Authorization"
-//   );
-//   if (req.method === "OPTIONS") {
-//     res.header("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE");
-//     return res.status(200).json({});
-//   }
-//   next();
-// });
 
 app.get("/chats", async (_, res) => {
     try {
@@ -172,7 +165,7 @@ app.post('/add', async (req, res) => {
 
 app.get("/full", async (_, res) => {
   try {
-    const combinedChats = await getCombinedChats()
+    const combinedChats = await getTrackedChannels()
 
     let result = []
     for (let i = 0; i < combinedChats.length; i++) {
